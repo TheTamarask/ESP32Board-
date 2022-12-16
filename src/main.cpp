@@ -1,14 +1,19 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 #define WIFI_SSID "2.4G-Vectra-WiFi-8FFD5A"
 #define WIFI_PASSWORD "9364C817ABBE3E49"
+
+Adafruit_BME280 Sensor;
 
 bool isConnected=0;
 IPAddress HostIP(192, 168, 0, 200);
 IPAddress SubnetMask(255, 255, 255, 0);
 IPAddress Gateway(192, 168, 0, 1);
-IPAddress DNS(8, 8, 8, 8);   
+IPAddress DNS(8, 8, 8, 8); 
 
 void WiFiClientSetup(IPAddress HostIP, IPAddress SubnetMask, IPAddress Gateway, IPAddress DNS)
 {
@@ -73,19 +78,54 @@ void WiFiClientReconnect()
   }
 }
 
+void printValues() {
+  Serial.print("Temperature = ");
+  Serial.print(Sensor.readTemperature());
+  Serial.println(" *C");
+  
+  // Convert temperature to Fahrenheit
+  /*Serial.print("Temperature = ");
+  Serial.print(1.8 * Sensor.readTemperature() + 32);
+  Serial.println(" *F");*/
+  
+  Serial.print("Pressure = ");
+  Serial.print(Sensor.readPressure() / 100.0F);
+  Serial.println(" hPa");
 
+  Serial.print("Approx. Altitude = ");
+  Serial.print(Sensor.readAltitude(1013.25));
+  Serial.println(" m");
+
+  Serial.print("Humidity = ");
+  Serial.print(Sensor.readHumidity());
+  Serial.println(" %");
+
+  Serial.println();
+  delay(1000);
+}
 
 void setup() {
   Serial.begin(921600);
   Serial.println("----------");
   Serial.println("Serial initialized!");
   Serial.println("----------");
-
   WiFiClientSetup(HostIP, SubnetMask, Gateway, DNS);
+
+  Serial.println("----------");
+  Serial.println("BME280 initializing...");
+  if(Sensor.begin(0x76))
+  {
+    Serial.println("BME280 initialized!");
+  }
+  else
+  {
+    Serial.println("BME280 not initialized!");
+  }
+  Serial.println("----------");
 }
 
 void loop() {
   WiFiClientReconnect();
-
+  printValues();
   
 }
