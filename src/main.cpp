@@ -24,6 +24,7 @@ void WiFiClientSetup(IPAddress HostIP, IPAddress SubnetMask, IPAddress Gateway, 
 {
   WiFi.config(HostIP, Gateway, SubnetMask, DNS);
   WiFi.mode(WIFI_MODE_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.println("----------");
   Serial.println("Connecting to WiFi, please wait...");
@@ -117,7 +118,7 @@ void SendDataToCloud()
   WifiConnection.flush();
 }
 
-void printValues() {
+void PrintValues() {
   Serial.print("Temperature = ");
   Serial.print(Sensor.readTemperature());
   Serial.println(" *C");
@@ -131,12 +132,7 @@ void printValues() {
   Serial.println(" %");
 
   Serial.println();
-
-  SendDataToCloud();
-  delay(60000);
 }
-
-
 
 void setup() {
   Serial.begin(921600);
@@ -161,7 +157,12 @@ void setup() {
 }
 
 void loop() {
-  WiFiClientReconnect();
-  printValues();
-  
+  //WiFiClientReconnect();
+  PrintValues();
+  if(WiFi.isConnected())
+  {
+    SendDataToCloud();
+    delay(60000);
+  }
+
 }
