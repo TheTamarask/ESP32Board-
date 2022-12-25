@@ -8,6 +8,7 @@
 #define WIFI_SSID "2.4G-Vectra-WiFi-8FFD5A"
 #define WIFI_PASSWORD "9364C817ABBE3E49"
 #define API_KEY "PNHYZHY120FBZWPR"
+#define DEEP_SLEEP_S_MULTIPLIER 1000000
 Adafruit_BME280 Sensor;
 
 bool isConnected=0;
@@ -19,7 +20,17 @@ WiFiClient ThingspeakConnection;
 IPAddress Thingspeak(184, 106, 153, 149); 
 uint16_t ThingspeakPort(80);
 
-
+/**
+ * @brief Setup WiFi interface as client device
+ *
+ * Configure the WiFi interface in Station mode with provided IP address.
+ * Sets the provided subnet and gateway  address, as wel as DNS server IP.
+ *
+ * @param HostIP  Station designated IP address
+ * @param SubnetMask  Subnet mask for provided IP address
+ * @param Gateway  default gateway address
+ * @param DNS  Default DNS server address
+ */
 void WiFiClientSetup(IPAddress HostIP, IPAddress SubnetMask, IPAddress Gateway, IPAddress DNS)
 {
   WiFi.config(HostIP, Gateway, SubnetMask, DNS);
@@ -84,6 +95,12 @@ void WiFiClientReconnect()
   }
 }
 
+/**
+ * @brief Sends the sensor readouts to Thingspeak
+ *
+ * Function reads out the BME280 sensor.
+ * Then the HTTPS request is prepared in order to send data to server.
+ */
 void SendDataToCloud()
 {
   float DataToSend[3]= {0};
@@ -118,6 +135,9 @@ void SendDataToCloud()
   ThingspeakConnection.flush();
 }
 
+/**
+ * @brief Prints the sensor readout through serial interface.
+ */
 void PrintValues() {
   Serial.print("Temperature = ");
   Serial.print(Sensor.readTemperature());
@@ -134,6 +154,9 @@ void PrintValues() {
   Serial.println();
 }
 
+/**
+ * @brief Setup the peripherals, read out the sensor ans send data to Thingspeak, then enhter deep sleep for set amount of time.
+ */
 void setup() {
   Serial.begin(921600);
   Serial.println("----------");
@@ -153,20 +176,20 @@ void setup() {
   }
   Serial.println("----------");
 
-
-}
-
-void loop() {
-  PrintValues();
+   PrintValues();
   if(WiFi.isConnected())
   {
     SendDataToCloud();
-    delay(60000);
   }
   else
   {
     Serial.println("No WiFi connection!");
-    delay(60000);
   }
+
+  delay(500); 
+  esp_deep_sleep(600*DEEP_SLEEP_S_MULTIPLIER);
+}
+
+void loop() {
 
 }
