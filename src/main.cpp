@@ -15,7 +15,7 @@ IPAddress HostIP(192, 168, 0, 200);
 IPAddress SubnetMask(255, 255, 255, 0);
 IPAddress Gateway(192, 168, 0, 1);
 IPAddress DNS(8, 8, 8, 8); 
-WiFiClient WifiConnection;
+WiFiClient ThingspeakConnection;
 IPAddress Thingspeak(184, 106, 153, 149); 
 uint16_t ThingspeakPort(80);
 
@@ -92,10 +92,10 @@ void SendDataToCloud()
   DataToSend[0]=Sensor.readTemperature();
   DataToSend[1]=Sensor.readPressure()/100.0F;
   DataToSend[2]=Sensor.readHumidity();
-  WifiConnection.flush();
-  if(!WifiConnection.connected())
+  ThingspeakConnection.flush();
+  if(!ThingspeakConnection.connected())
   {
-    if(WifiConnection.connect(Thingspeak, ThingspeakPort))
+    if(ThingspeakConnection.connect(Thingspeak, ThingspeakPort))
     {
       Serial.println("Connected to Thingspeak!");
     }
@@ -113,9 +113,9 @@ void SendDataToCloud()
     sprintf(tempMessage, "&field%d=%.2f", i, DataToSend[i-1]);
     strcat(Message,tempMessage);
   }
-  WifiConnection.println(Message);
-  WifiConnection.println("Connection: close");
-  WifiConnection.flush();
+  ThingspeakConnection.println(Message);
+  ThingspeakConnection.println("Connection: close");
+  ThingspeakConnection.flush();
 }
 
 void PrintValues() {
@@ -157,11 +157,15 @@ void setup() {
 }
 
 void loop() {
-  //WiFiClientReconnect();
   PrintValues();
   if(WiFi.isConnected())
   {
     SendDataToCloud();
+    delay(60000);
+  }
+  else
+  {
+    Serial.println("No WiFi connection!");
     delay(60000);
   }
 
