@@ -119,6 +119,7 @@ void SendDataToCloud()
     else
     {
       Serial.println("An error occurred!");
+      return;
     }
   }
 
