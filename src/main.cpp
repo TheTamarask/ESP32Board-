@@ -6,17 +6,19 @@
 
 
 #define WIFI_SSID "2.4G-Vectra-WiFi-8FFD5A"
+//#define WIFI_SSID "Hotspot"
 #define WIFI_PASSWORD "9364C817ABBE3E49"
+//#define WIFI_PASSWORD "Hotspot1!"
 #define API_KEY "PNHYZHY120FBZWPR"
 #define DEEP_SLEEP_S_MULTIPLIER 1000000
+#define DEEP_SLEEP_SECONDS 900
 Adafruit_BME280 Sensor;
 
-bool isConnected=0;
 IPAddress HostIP(192, 168, 0, 200);
 IPAddress SubnetMask(255, 255, 255, 0);
 IPAddress Gateway(192, 168, 0, 1);
 IPAddress DNS(8, 8, 8, 8); 
-WiFiClient ThingspeakConnection;
+WiFiClient ThingspeakConnectionWrite;
 IPAddress Thingspeak(184, 106, 153, 149); 
 uint16_t ThingspeakPort(80);
 
@@ -33,7 +35,7 @@ uint16_t ThingspeakPort(80);
  */
 void WiFiClientSetup(IPAddress HostIP, IPAddress SubnetMask, IPAddress Gateway, IPAddress DNS)
 {
-  WiFi.config(HostIP, Gateway, SubnetMask, DNS);
+  //WiFi.config(HostIP, Gateway, SubnetMask, DNS);
   WiFi.mode(WIFI_MODE_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -63,37 +65,9 @@ void WiFiClientSetup(IPAddress HostIP, IPAddress SubnetMask, IPAddress Gateway, 
   Serial.print(WiFi.dnsIP());
   Serial.print("\r\n");
   Serial.println("----------");
-  isConnected=true;
+
 }
 
-void WiFiClientReconnect()
-{
-  if(WiFi.status()!=WL_CONNECTED)
-  { 
-    isConnected=0;
-    uint8_t tempCounter=0;
-    Serial.println("----------");
-    Serial.println("Lost connection. Reestablishing...");
-    while(WiFi.status()!=WL_CONNECTED)
-    {
-      tempCounter++;
-      delay(1000);
-      Serial.print(".");
-      if(tempCounter>=10)
-      {
-        Serial.print("\r\n");
-        tempCounter=0;
-      }
-    }
-  }
-  else if(WiFi.status()==WL_CONNECTED && !isConnected)
-  {
-    Serial.print("\r\n");
-    Serial.println("Connection reestablished!");
-    Serial.println("----------");
-    isConnected=true;
-  }
-}
 
 /**
  * @brief Sends the sensor readouts to Thingspeak
@@ -109,10 +83,10 @@ void SendDataToCloud()
   DataToSend[0]=Sensor.readTemperature();
   DataToSend[1]=Sensor.readPressure()/100.0F;
   DataToSend[2]=Sensor.readHumidity();
-  ThingspeakConnection.flush();
-  if(!ThingspeakConnection.connected())
+  ThingspeakConnectionWrite.flush();
+  if(!ThingspeakConnectionWrite.connected())
   {
-    if(ThingspeakConnection.connect(Thingspeak, ThingspeakPort))
+    if(ThingspeakConnectionWrite.connect(Thingspeak, ThingspeakPort))
     {
       Serial.println("Connected to Thingspeak!");
     }
@@ -131,9 +105,9 @@ void SendDataToCloud()
     sprintf(tempMessage, "&field%d=%.2f", i, DataToSend[i-1]);
     strcat(Message,tempMessage);
   }
-  ThingspeakConnection.println(Message);
-  ThingspeakConnection.println("Connection: close");
-  ThingspeakConnection.flush();
+  ThingspeakConnectionWrite.println(Message);
+  ThingspeakConnectionWrite.println("Connection: close");
+  ThingspeakConnectionWrite.flush();
 }
 
 /**
@@ -177,7 +151,7 @@ void setup() {
   }
   Serial.println("----------");
 
-   PrintValues();
+  //PrintValues();
   if(WiFi.isConnected())
   {
     SendDataToCloud();
@@ -188,7 +162,7 @@ void setup() {
   }
 
   delay(500); 
-  esp_deep_sleep(600*DEEP_SLEEP_S_MULTIPLIER);
+  esp_deep_sleep(DEEP_SLEEP_SECONDS*DEEP_SLEEP_S_MULTIPLIER);
 }
 
 void loop() {
